@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mouse Launcher</title>
+  <link rel="stylesheet" href="launcher.css" />
+</head>
+<body>
+  <div id="pie-menu" class="pie-menu hidden">
+    <!-- 中心の設定ボタン -->
+    <button id="settings-button" class="settings-button" title="設定">⚙</button>
+
+    <!-- 6スロット（slot-0〜slot-5: 上から時計回り） -->
+    <div class="slot" id="slot-0" data-slot-id="0">
+      <div class="slot-icon"></div>
+      <div class="slot-label"></div>
+    </div>
+    <div class="slot" id="slot-1" data-slot-id="1">
+      <div class="slot-icon"></div>
+      <div class="slot-label"></div>
+    </div>
+    <div class="slot" id="slot-2" data-slot-id="2">
+      <div class="slot-icon"></div>
+      <div class="slot-label"></div>
+    </div>
+    <div class="slot" id="slot-3" data-slot-id="3">
+      <div class="slot-icon"></div>
+      <div class="slot-label"></div>
+    </div>
+    <div class="slot" id="slot-4" data-slot-id="4">
+      <div class="slot-icon"></div>
+      <div class="slot-label"></div>
+    </div>
+    <div class="slot" id="slot-5" data-slot-id="5">
+      <div class="slot-icon"></div>
+      <div class="slot-label"></div>
+    </div>
+  </div>
+
+  <script src="launcher.js" type="module"></script>
+</body>
+</html>

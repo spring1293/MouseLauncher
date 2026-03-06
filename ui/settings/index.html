@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mouse Launcher - 設定</title>
+  <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">Mouse Launcher 設定</h1>
+
+    <!-- トリガーキー設定 -->
+    <section class="section">
+      <h2 class="section-title">トリガーキー</h2>
+      <div class="trigger-row">
+        <span id="trigger-key-display" class="trigger-display">Ctrl+Shift+Space</span>
+        <button id="trigger-change-btn" class="btn btn--secondary">変更</button>
+      </div>
+      <p id="trigger-hint" class="hint hidden">キーを押してください（Escでキャンセル）</p>
+      <p id="trigger-error" class="error hidden">有効なキーの組み合わせ（修飾キー＋キー）を入力してください</p>
+    </section>
+
+    <!-- スロット設定 -->
+    <section class="section">
+      <h2 class="section-title">ショートカット設定</h2>
+      <div id="slot-list" class="slot-list">
+        <!-- スロット行はJSで動的生成 -->
+      </div>
+    </section>
+  </div>
+
+  <script src="settings.js" type="module"></script>
+</body>
+</html>
