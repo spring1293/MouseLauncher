@@ -21,8 +21,13 @@ pub struct Slot {
 
 impl Default for Config {
     fn default() -> Self {
+        #[cfg(target_os = "macos")]
+        let trigger_key = "Super+Shift+Space".to_string();
+        #[cfg(not(target_os = "macos"))]
+        let trigger_key = "Ctrl+Shift+Space".to_string();
+
         Config {
-            trigger_key: "Ctrl+Shift+Space".to_string(),
+            trigger_key,
             slots: (0..MAX_SLOTS)
                 .map(|i| Slot {
                     id: i,
@@ -49,6 +54,9 @@ mod tests {
     #[test]
     fn test_default_trigger_key() {
         let config = Config::default();
+        #[cfg(target_os = "macos")]
+        assert_eq!(config.trigger_key, "Super+Shift+Space");
+        #[cfg(not(target_os = "macos"))]
         assert_eq!(config.trigger_key, "Ctrl+Shift+Space");
     }
 
