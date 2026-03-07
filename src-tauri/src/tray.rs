@@ -30,7 +30,9 @@ pub fn setup(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
             _ => {}
         })
         .on_tray_icon_event(|tray, event| {
-            // 左クリックでランチャーを表示する
+            // Windows: 左クリックでランチャーを表示する
+            // macOS: 左クリックはメニュー表示に使われるため、メニュー項目から起動する
+            #[cfg(target_os = "windows")]
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,
                 button_state: MouseButtonState::Up,
@@ -39,6 +41,8 @@ pub fn setup(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
             {
                 crate::commands::shortcut::show_launcher(tray.app_handle());
             }
+            #[cfg(target_os = "macos")]
+            let _ = (tray, event);
         })
         .build(app)?;
 
