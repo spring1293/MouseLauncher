@@ -15,30 +15,34 @@ pub fn register_shortcut(app: AppHandle, key: &str) -> Result<(), String> {
 /// カーソル位置にランチャーウィンドウを表示する
 pub fn show_launcher(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("launcher") {
-        if let Ok(pos) = get_cursor_position() {
-            let screen_size = get_screen_size().unwrap_or((1920, 1080));
-            let win_w = 300_i32;
-            let win_h = 300_i32;
+        let screen_size = get_screen_size().unwrap_or((1920, 1080));
+        let win_w = 300_i32;
+        let win_h = 300_i32;
 
-            // 画面端対応: ウィンドウが画面外にはみ出さないよう調整する
-            let x = (pos.0 - win_w / 2).max(0).min(screen_size.0 as i32 - win_w);
-            let y = (pos.1 - win_h / 2).max(0).min(screen_size.1 as i32 - win_h);
+        // カーソル位置取得失敗時は画面中央にフォールバックする
+        let (cursor_x, cursor_y) = get_cursor_position().unwrap_or((
+            screen_size.0 as i32 / 2,
+            screen_size.1 as i32 / 2,
+        ));
 
-            let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
-            let _ = window.show();
-            let _ = window.set_focus();
+        // 画面端対応: ウィンドウが画面外にはみ出さないよう調整する
+        let x = (cursor_x - win_w / 2).max(0).min(screen_size.0 as i32 - win_w);
+        let y = (cursor_y - win_h / 2).max(0).min(screen_size.1 as i32 - win_h);
 
-            // カーソル座標をフロントエンドに送信する
-            let _ = window.emit(
-                "launcher-show",
-                serde_json::json!({
-                    "cursorX": pos.0,
-                    "cursorY": pos.1,
-                    "windowX": x,
-                    "windowY": y,
-                }),
-            );
-        }
+        let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
+        let _ = window.show();
+        let _ = window.set_focus();
+
+        // カーソル座標をフロントエンドに送信する
+        let _ = window.emit(
+            "launcher-show",
+            serde_json::json!({
+                "cursorX": cursor_x,
+                "cursorY": cursor_y,
+                "windowX": x,
+                "windowY": y,
+            }),
+        );
     }
 }
 
@@ -71,12 +75,13 @@ fn macos_cursor_position() -> Result<(i32, i32), String> {
     // AppleScriptでカーソル位置を取得する
     let output = Command::new("osascript")
         .arg("-e")
-        .arg("tell application \"Finder\" to get the position of the mouse")
+        .arg("tell application \"System Events\" to return position of the mouse")
         .output()
         .map_err(|e| e.to_string())?;
     let s = String::from_utf8_lossy(&output.stdout);
-    // "x, y" 形式でパースする
-    let parts: Vec<&str> = s.trim().split(", ").collect();
+    // "{x, y}" または "x, y" 形式でパースする
+    let s = s.trim().trim_matches(|c| c == '{' || c == '}');
+    let parts: Vec<&str> = s.split(", ").collect();
     if parts.len() == 2 {
         let x = parts[0].parse::<i32>().map_err(|e| e.to_string())?;
         let y = parts[1].parse::<i32>().map_err(|e| e.to_string())?;
