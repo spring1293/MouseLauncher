@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(source:*)",
+      "Bash(convert:*)",
+      "Bash(python3:*)",
+      "Bash(npm install:*)",
+      "Bash(sudo apt-get:*)",
+      "Bash(export:*)",
+      "Bash(~/.cargo/bin/cargo clippy:*)",
+      "Bash(git:*)",
+      "Bash(~/.cargo/bin/cargo check:*)"
+    ]
+  }
+}

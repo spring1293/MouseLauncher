@@ -1,6 +1,5 @@
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
-const { getCurrentWebviewWindow } = window.__TAURI__.webviewWindow;
 
 const RADIUS = 90; // スロット中心からの距離（px）
 const SLOT_COUNT = 6;
@@ -76,8 +75,7 @@ async function hideMenu() {
   menu.classList.add('hidden');
   menu.classList.remove('visible');
   try {
-    const win = getCurrentWebviewWindow();
-    await win.hide();
+    await invoke('close_launcher');
   } catch (e) {
     console.error('ウィンドウの非表示に失敗しました', e);
   }
@@ -122,11 +120,9 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// 範囲外クリックでパイメニューを閉じる
-document.addEventListener('click', (e) => {
-  if (e.target === document.body || e.target === document.documentElement) {
-    hideMenu();
-  }
+// ウィンドウがフォーカスを失ったとき（範囲外クリック等）にパイメニューを閉じる
+window.addEventListener('blur', () => {
+  hideMenu();
 });
 
 // 初期化

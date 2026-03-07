@@ -33,6 +33,7 @@ pub fn run() {
             commands::config::delete_slot,
             commands::config::update_trigger_key,
             commands::config::open_settings,
+            commands::config::close_launcher,
             commands::launcher::launch_app,
         ])
         .run(tauri::generate_context!())

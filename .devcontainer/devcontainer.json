@@ -1,7 +1,7 @@
 {
-  "name": "claude-code-book-template",
+  "name": "MouseLauncher",
   "image": "mcr.microsoft.com/devcontainers/base:bookworm",
-  "workspaceFolder": "/workspaces/claude-code-book-template",
+  "workspaceFolder": "/workspaces/MouseLauncher",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}

@@ -47,6 +47,15 @@ pub fn update_trigger_key(app: AppHandle, key: String) -> Result<(), String> {
     store::save(&app, &config)
 }
 
+/// ランチャーウィンドウを非表示にする
+#[tauri::command]
+pub fn close_launcher(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("launcher") {
+        window.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 /// 設定ウィンドウを表示する
 #[tauri::command]
 pub fn open_settings(app: AppHandle) -> Result<(), String> {
