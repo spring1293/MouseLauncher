@@ -14,7 +14,8 @@ pub fn launch_or_focus(app_path: &str) -> Result<(), String> {
         // 起動中の場合は既存ウィンドウをフォーカスする
         unsafe {
             ShowWindow(hwnd, SW_RESTORE);
-            SetForegroundWindow(hwnd).map_err(|e| e.to_string())?;
+            // SetForegroundWindow は BOOL を返す（失敗しても続行）
+            SetForegroundWindow(hwnd);
         }
     } else {
         // 未起動の場合は新規起動する
@@ -28,7 +29,6 @@ pub fn launch_or_focus(app_path: &str) -> Result<(), String> {
 /// 実行ファイルパスで起動中のウィンドウを検索する
 fn find_window_by_exe(app_path: &str) -> Option<HWND> {
     let app_path = app_path.to_lowercase();
-    let mut result: Option<HWND> = None;
 
     // EnumWindowsのコールバックに渡すデータ
     struct EnumData {
