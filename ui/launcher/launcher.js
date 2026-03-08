@@ -105,12 +105,13 @@ document.querySelectorAll('.slot').forEach((el) => {
 
 // 設定ボタンクリックイベント
 settingsButton.addEventListener('click', async () => {
-  await hideMenu();
+  // macOS: アプリがフォーカスを持っている間に設定画面を開く（先に hide するとフォーカスが外れる）
   try {
     await invoke('open_settings');
   } catch (e) {
     console.error('設定画面を開けませんでした', e);
   }
+  await hideMenu();
 });
 
 // Escキーでパイメニューを閉じる

@@ -15,21 +15,27 @@ pub fn register_shortcut(app: AppHandle, key: &str) -> Result<(), String> {
 /// カーソル位置にランチャーウィンドウを表示する
 pub fn show_launcher(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("launcher") {
-        let screen_size = get_screen_size().unwrap_or((1920, 1080));
         let win_w = 300_i32;
         let win_h = 300_i32;
 
+        // スクリーンサイズを取得する（座標系はプラットフォームに依存）
+        let screen_size = get_screen_size(app);
+
         // カーソル位置取得失敗時は画面中央にフォールバックする
-        let (cursor_x, cursor_y) = get_cursor_position().unwrap_or((
-            screen_size.0 as i32 / 2,
-            screen_size.1 as i32 / 2,
-        ));
+        let (cursor_x, cursor_y) = get_cursor_position()
+            .unwrap_or((screen_size.0 / 2, screen_size.1 / 2));
 
         // 画面端対応: ウィンドウが画面外にはみ出さないよう調整する
-        let x = (cursor_x - win_w / 2).max(0).min(screen_size.0 as i32 - win_w);
-        let y = (cursor_y - win_h / 2).max(0).min(screen_size.1 as i32 - win_h);
+        let x = (cursor_x - win_w / 2).max(0).min(screen_size.0 - win_w);
+        let y = (cursor_y - win_h / 2).max(0).min(screen_size.1 - win_h);
 
+        // macOS: AppleScript は論理座標を返すため LogicalPosition を使用する
+        // Windows: GetCursorPos は物理座標を返すため PhysicalPosition を使用する
+        #[cfg(target_os = "macos")]
+        let _ = window.set_position(tauri::LogicalPosition::new(x, y));
+        #[cfg(not(target_os = "macos"))]
         let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
+
         let _ = window.show();
         let _ = window.set_focus();
 
@@ -103,21 +109,21 @@ fn windows_cursor_position() -> Result<(i32, i32), String> {
 }
 
 /// スクリーンサイズを取得する
-fn get_screen_size() -> Result<(u32, u32), String> {
-    #[cfg(target_os = "windows")]
-    {
-        use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
-        let w = unsafe { GetSystemMetrics(SM_CXSCREEN) };
-        let h = unsafe { GetSystemMetrics(SM_CYSCREEN) };
-        Ok((w as u32, h as u32))
+/// macOS: 論理ピクセル（AppleScript の座標系と一致）
+/// Windows: 物理ピクセル（GetCursorPos の座標系と一致）
+fn get_screen_size(app: &AppHandle) -> (i32, i32) {
+    if let Ok(Some(monitor)) = app.primary_monitor() {
+        let size = monitor.size();
+        #[cfg(target_os = "macos")]
+        {
+            let scale = monitor.scale_factor();
+            return (
+                (size.width as f64 / scale) as i32,
+                (size.height as f64 / scale) as i32,
+            );
+        }
+        #[cfg(not(target_os = "macos"))]
+        return (size.width as i32, size.height as i32);
     }
-    #[cfg(target_os = "macos")]
-    {
-        // macOSではデフォルト値を返す（Tauriのmonitor APIで取得可能だが要AppHandle）
-        Ok((1920, 1080))
-    }
-    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-    {
-        Ok((1920, 1080))
-    }
+    (1920, 1080)
 }
