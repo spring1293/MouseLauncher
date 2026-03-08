@@ -1,8 +1,10 @@
 use tauri::{
     menu::{Menu, MenuItem},
-    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    tray::{TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager,
 };
+#[cfg(target_os = "windows")]
+use tauri::tray::{MouseButton, MouseButtonState};
 
 /// システムトレイ / メニューバーのアイコンをセットアップする
 pub fn setup(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {

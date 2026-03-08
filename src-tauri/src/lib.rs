@@ -22,8 +22,8 @@ pub fn run() {
 
             // 設定ウィンドウ: 閉じるボタンで destroy せず hide する
             // （macOS では destroy 後に再表示できなくなるため）
-            if let Some(settings_win) = app.get_webview_window("settings") {
-                let win = settings_win.clone();
+            if let Some(settings_win) = tauri::Manager::get_webview_window(app, "settings") {
+                let win: tauri::WebviewWindow = settings_win.clone();
                 settings_win.on_window_event(move |event| {
                     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                         api.prevent_close();
