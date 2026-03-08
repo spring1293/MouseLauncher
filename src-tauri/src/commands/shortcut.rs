@@ -77,23 +77,32 @@ fn get_cursor_position() -> Result<(i32, i32), String> {
 
 #[cfg(target_os = "macos")]
 fn macos_cursor_position() -> Result<(i32, i32), String> {
-    use std::process::Command;
-    // AppleScriptでカーソル位置を取得する
-    let output = Command::new("osascript")
-        .arg("-e")
-        .arg("tell application \"System Events\" to return position of the mouse")
-        .output()
-        .map_err(|e| e.to_string())?;
-    let s = String::from_utf8_lossy(&output.stdout);
-    // "{x, y}" または "x, y" 形式でパースする
-    let s = s.trim().trim_matches(|c| c == '{' || c == '}');
-    let parts: Vec<&str> = s.split(", ").collect();
-    if parts.len() == 2 {
-        let x = parts[0].parse::<i32>().map_err(|e| e.to_string())?;
-        let y = parts[1].parse::<i32>().map_err(|e| e.to_string())?;
-        Ok((x, y))
-    } else {
-        Err(format!("カーソル座標のパースに失敗しました: {}", s))
+    use std::ffi::c_void;
+
+    // CoreGraphics の CGPoint 構造体
+    #[repr(C)]
+    struct CGPoint {
+        x: f64,
+        y: f64,
+    }
+
+    // CoreGraphics フレームワークを直接呼び出す（アクセシビリティ権限不要）
+    #[link(name = "CoreGraphics", kind = "framework")]
+    extern "C" {
+        fn CGEventCreate(source: *const c_void) -> *mut c_void;
+        fn CGEventGetLocation(event: *const c_void) -> CGPoint;
+        fn CFRelease(cf: *const c_void);
+    }
+
+    unsafe {
+        let event = CGEventCreate(std::ptr::null());
+        if event.is_null() {
+            return Err("マウス座標の取得に失敗しました".to_string());
+        }
+        let point = CGEventGetLocation(event);
+        CFRelease(event);
+        // CGEvent は論理座標（ポイント）を返す
+        Ok((point.x as i32, point.y as i32))
     }
 }
 
