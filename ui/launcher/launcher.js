@@ -48,7 +48,13 @@ function renderSlots(slots) {
       // 割り当て済みスロット
       el.classList.remove('slot--disabled');
       labelEl.textContent = slot.app_name || getFileName(slot.app_path);
-      iconEl.innerHTML = '📦'; // アイコン画像が取得できない場合のフォールバック
+      iconEl.innerHTML = '📦'; // 読み込み中のフォールバック
+      // アイコンを非同期で取得して表示する
+      invoke('get_app_icon', { appPath: slot.app_path }).then((dataUrl) => {
+        if (dataUrl) {
+          iconEl.innerHTML = `<img src="${dataUrl}" alt="" />`;
+        }
+      }).catch(() => {});
     } else {
       // 未割り当てスロット
       el.classList.add('slot--disabled');

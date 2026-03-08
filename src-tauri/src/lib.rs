@@ -20,6 +20,18 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             check_accessibility(app.handle());
 
+            // 設定ウィンドウ: 閉じるボタンで destroy せず hide する
+            // （macOS では destroy 後に再表示できなくなるため）
+            if let Some(settings_win) = app.get_webview_window("settings") {
+                let win = settings_win.clone();
+                settings_win.on_window_event(move |event| {
+                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                        api.prevent_close();
+                        let _ = win.hide();
+                    }
+                });
+            }
+
             // グローバルショートカットの登録
             let trigger_key = config.trigger_key.clone();
             let app_handle = app.handle().clone();
@@ -35,6 +47,7 @@ pub fn run() {
             commands::config::open_settings,
             commands::config::close_launcher,
             commands::launcher::launch_app,
+            commands::icon::get_app_icon,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
