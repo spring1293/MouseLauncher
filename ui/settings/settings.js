@@ -230,7 +230,11 @@ document.addEventListener('keydown', async (e) => {
   if (e.shiftKey) parts.push('Shift');
   if (e.altKey) parts.push('Alt');
   if (e.metaKey) parts.push('Super');
-  parts.push(e.key.toUpperCase());
+
+  // e.key が " " (スペース) の場合はプラグインが認識できる "Space" に変換する
+  // 1文字のキーは大文字化、それ以外は元の名前をそのまま使う
+  const keyName = e.key === ' ' ? 'Space' : e.key.length === 1 ? e.key.toUpperCase() : e.key;
+  parts.push(keyName);
 
   const keyStr = parts.join('+');
 
