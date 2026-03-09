@@ -71,6 +71,10 @@ fn extract_icon(app_path: &str) -> Option<String> {
 
 #[cfg(target_os = "windows")]
 fn extract_icon(app_path: &str) -> Option<String> {
+    use std::os::windows::process::CommandExt;
+    // コンソールウィンドウを表示しないフラグ
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+
     // PowerShell で .exe からアイコンを抽出して base64 PNG に変換する
     let escaped = app_path.replace('\'', "''");
     let script = format!(
@@ -86,6 +90,7 @@ try {{
 
     let output = std::process::Command::new("powershell")
         .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .ok()?;
 

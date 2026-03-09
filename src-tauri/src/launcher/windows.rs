@@ -1,4 +1,7 @@
+use std::os::windows::process::CommandExt;
 use std::process::Command;
+
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 use windows::Win32::Foundation::{BOOL, HWND, LPARAM};
 use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
@@ -20,6 +23,7 @@ pub fn launch_or_focus(app_path: &str) -> Result<(), String> {
     } else {
         // 未起動の場合は新規起動する
         Command::new(app_path)
+            .creation_flags(CREATE_NO_WINDOW)
             .spawn()
             .map_err(|e| format!("アプリの起動に失敗しました: {}", e))?;
     }
