@@ -8,6 +8,7 @@ const menu = document.getElementById('pie-menu');
 const settingsButton = document.getElementById('settings-button');
 
 let config = null;
+const iconCache = new Map(); // アプリパス → data URL のインメモリキャッシュ
 
 // 設定を読み込みスロットを描画する
 async function loadAndRender() {
@@ -21,6 +22,8 @@ async function loadAndRender() {
 
 // スロットを描画する
 function renderSlots(slots) {
+  const uncachedPaths = [];
+
   for (let i = 0; i < SLOT_COUNT; i++) {
     const slot = slots[i];
     const el = document.getElementById(`slot-${i}`);
@@ -48,19 +51,39 @@ function renderSlots(slots) {
       // 割り当て済みスロット
       el.classList.remove('slot--disabled');
       labelEl.textContent = slot.app_name || getFileName(slot.app_path);
-      iconEl.innerHTML = '📦'; // 読み込み中のフォールバック
-      // アイコンを非同期で取得して表示する
-      invoke('get_app_icon', { appPath: slot.app_path }).then((dataUrl) => {
-        if (dataUrl) {
-          iconEl.innerHTML = `<img src="${dataUrl}" alt="" />`;
-        }
-      }).catch(() => {});
+
+      // キャッシュがあれば即表示、なければフォールバックを表示しておく
+      if (iconCache.has(slot.app_path)) {
+        iconEl.innerHTML = `<img src="${iconCache.get(slot.app_path)}" alt="" />`;
+      } else {
+        iconEl.innerHTML = '📦';
+        uncachedPaths.push(slot.app_path);
+      }
     } else {
       // 未割り当てスロット
       el.classList.add('slot--disabled');
       labelEl.textContent = '';
       iconEl.innerHTML = '';
     }
+  }
+
+  // 未キャッシュのアイコンを1回の呼び出しで一括取得する
+  if (uncachedPaths.length > 0) {
+    invoke('get_app_icons', { appPaths: uncachedPaths }).then((iconsMap) => {
+      for (const [path, dataUrl] of Object.entries(iconsMap)) {
+        iconCache.set(path, dataUrl);
+      }
+      // 取得できたアイコンをスロットに反映する
+      for (let i = 0; i < SLOT_COUNT; i++) {
+        const slot = slots[i];
+        if (!slot?.app_path) continue;
+        const dataUrl = iconsMap[slot.app_path];
+        if (!dataUrl) continue;
+        const el = document.getElementById(`slot-${i}`);
+        if (!el) continue;
+        el.querySelector('.slot-icon').innerHTML = `<img src="${dataUrl}" alt="" />`;
+      }
+    }).catch(() => {});
   }
 }
 

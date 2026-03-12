@@ -39,6 +39,7 @@ pub fn run() {
 
             Ok(())
         })
+        .manage(commands::icon::IconCache::new())
         .invoke_handler(tauri::generate_handler![
             commands::config::get_config,
             commands::config::update_slot,
@@ -47,7 +48,7 @@ pub fn run() {
             commands::config::open_settings,
             commands::config::close_launcher,
             commands::launcher::launch_app,
-            commands::icon::get_app_icon,
+            commands::icon::get_app_icons,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
