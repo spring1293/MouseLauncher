@@ -13,20 +13,41 @@ use windows::Win32::UI::WindowsAndMessaging::{
 
 /// Windows: アプリを起動またはフォーカスする
 pub fn launch_or_focus(app_path: &str) -> Result<(), String> {
-    if let Some(hwnd) = find_window_by_exe(app_path) {
-        // 起動中の場合は既存ウィンドウをフォーカスする
-        unsafe {
-            ShowWindow(hwnd, SW_RESTORE);
-            // SetForegroundWindow は BOOL を返す（失敗しても続行）
-            SetForegroundWindow(hwnd);
+    let ext = std::path::Path::new(app_path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+
+    match ext.as_str() {
+        "exe" => {
+            // .exe: 起動中なら既存ウィンドウをフォーカス、未起動なら新規起動する
+            if let Some(hwnd) = find_window_by_exe(app_path) {
+                unsafe {
+                    ShowWindow(hwnd, SW_RESTORE);
+                    SetForegroundWindow(hwnd);
+                }
+            } else {
+                Command::new(app_path)
+                    .creation_flags(CREATE_NO_WINDOW)
+                    .spawn()
+                    .map_err(|e| format!("アプリの起動に失敗しました: {}", e))?;
+            }
         }
-    } else {
-        // 未起動の場合は新規起動する
-        Command::new(app_path)
-            .creation_flags(CREATE_NO_WINDOW)
-            .spawn()
-            .map_err(|e| format!("アプリの起動に失敗しました: {}", e))?;
+        // .lnk / .bat などシェル経由での実行が必要なファイル
+        _ => shell_open(app_path)?,
     }
+    Ok(())
+}
+
+/// シェル経由でファイルを開く（.lnk ショートカット・.bat バッチファイルなど）
+/// `cmd /c start "" path` を使うことで OS にファイルの種別に応じた処理を委譲する
+fn shell_open(path: &str) -> Result<(), String> {
+    Command::new("cmd.exe")
+        .args(["/c", "start", "", path])
+        .creation_flags(CREATE_NO_WINDOW)
+        .spawn()
+        .map_err(|e| format!("ファイルの実行に失敗しました: {}", e))?;
     Ok(())
 }
 

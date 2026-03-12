@@ -90,7 +90,7 @@ async function handleSetSlot(slotId) {
     const selected = await openDialog({
       multiple: false,
       filters: [
-        { name: 'アプリケーション', extensions: ['exe', 'app'] },
+        { name: 'アプリケーション', extensions: ['exe', 'lnk', 'bat', 'app'] },
         { name: 'すべてのファイル', extensions: ['*'] },
       ],
     });
@@ -135,7 +135,7 @@ async function updateSlot(slotId, appPath) {
 // パスからファイル名を取得する
 function getFileName(path) {
   if (!path) return '';
-  return path.split(/[\\/]/).pop().replace(/\.(exe|app)$/i, '');
+  return path.split(/[\\/]/).pop().replace(/\.(exe|lnk|bat|app)$/i, '');
 }
 
 // ドラッグ&ドロップでスロットを設定する

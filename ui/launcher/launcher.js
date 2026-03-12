@@ -89,7 +89,7 @@ function renderSlots(slots) {
 
 // パスからファイル名を取得する
 function getFileName(path) {
-  return path.split(/[\\/]/).pop().replace(/\.(exe|app)$/i, '');
+  return path.split(/[\\/]/).pop().replace(/\.(exe|lnk|bat|app)$/i, '');
 }
 
 // パイメニューを表示する
