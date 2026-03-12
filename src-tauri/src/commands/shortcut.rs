@@ -18,16 +18,10 @@ pub fn show_launcher(app: &AppHandle) {
         let win_w = 300_i32;
         let win_h = 300_i32;
 
-        // スクリーンサイズを取得する（座標系はプラットフォームに依存）
-        let screen_size = get_screen_size(app);
+        let (cursor_x, cursor_y) = get_cursor_position().unwrap_or((960, 540));
 
-        // カーソル位置取得失敗時は画面中央にフォールバックする
-        let (cursor_x, cursor_y) = get_cursor_position()
-            .unwrap_or((screen_size.0 / 2, screen_size.1 / 2));
-
-        // 画面端対応: ウィンドウが画面外にはみ出さないよう調整する
-        let x = (cursor_x - win_w / 2).max(0).min(screen_size.0 - win_w);
-        let y = (cursor_y - win_h / 2).max(0).min(screen_size.1 - win_h);
+        // カーソルが存在するモニター内に収まる位置を計算する
+        let (x, y) = monitor_clamped_position(app, cursor_x, cursor_y, win_w, win_h);
 
         // macOS: AppleScript は論理座標を返すため LogicalPosition を使用する
         // Windows: GetCursorPos は物理座標を返すため PhysicalPosition を使用する
@@ -57,6 +51,62 @@ pub fn unregister_shortcut(app: AppHandle, key: &str) -> Result<(), String> {
     app.global_shortcut()
         .unregister(key)
         .map_err(|e| e.to_string())
+}
+
+/// カーソルが存在するモニター内に収まるウィンドウ左上座標を返す
+fn monitor_clamped_position(
+    app: &AppHandle,
+    cursor_x: i32,
+    cursor_y: i32,
+    win_w: i32,
+    win_h: i32,
+) -> (i32, i32) {
+    if let Some((mon_x, mon_y, mon_w, mon_h)) = find_monitor_for_cursor(app, cursor_x, cursor_y) {
+        let x = (cursor_x - win_w / 2).max(mon_x).min(mon_x + mon_w - win_w);
+        let y = (cursor_y - win_h / 2).max(mon_y).min(mon_y + mon_h - win_h);
+        (x, y)
+    } else {
+        // モニター特定失敗時: カーソル中心に配置（境界チェックなし）
+        (cursor_x - win_w / 2, cursor_y - win_h / 2)
+    }
+}
+
+/// カーソル座標を含むモニターの境界 (x, y, w, h) を返す
+/// 座標系: macOS は論理ピクセル（ポイント）、Windows は物理ピクセル
+fn find_monitor_for_cursor(
+    app: &AppHandle,
+    cursor_x: i32,
+    cursor_y: i32,
+) -> Option<(i32, i32, i32, i32)> {
+    let monitors = app.available_monitors().ok()?;
+
+    for monitor in &monitors {
+        let pos = monitor.position();
+        let size = monitor.size();
+
+        #[cfg(target_os = "macos")]
+        let (mon_x, mon_y, mon_w, mon_h) = {
+            let scale = monitor.scale_factor();
+            (
+                (pos.x as f64 / scale) as i32,
+                (pos.y as f64 / scale) as i32,
+                (size.width as f64 / scale) as i32,
+                (size.height as f64 / scale) as i32,
+            )
+        };
+        #[cfg(not(target_os = "macos"))]
+        let (mon_x, mon_y, mon_w, mon_h) =
+            (pos.x, pos.y, size.width as i32, size.height as i32);
+
+        if cursor_x >= mon_x
+            && cursor_x < mon_x + mon_w
+            && cursor_y >= mon_y
+            && cursor_y < mon_y + mon_h
+        {
+            return Some((mon_x, mon_y, mon_w, mon_h));
+        }
+    }
+    None
 }
 
 /// マウスカーソルの現在座標を取得する
@@ -115,24 +165,4 @@ fn windows_cursor_position() -> Result<(i32, i32), String> {
         GetCursorPos(&mut point).map_err(|e| e.to_string())?;
     }
     Ok((point.x, point.y))
-}
-
-/// スクリーンサイズを取得する
-/// macOS: 論理ピクセル（AppleScript の座標系と一致）
-/// Windows: 物理ピクセル（GetCursorPos の座標系と一致）
-fn get_screen_size(app: &AppHandle) -> (i32, i32) {
-    if let Ok(Some(monitor)) = app.primary_monitor() {
-        let size = monitor.size();
-        #[cfg(target_os = "macos")]
-        {
-            let scale = monitor.scale_factor();
-            return (
-                (size.width as f64 / scale) as i32,
-                (size.height as f64 / scale) as i32,
-            );
-        }
-        #[cfg(not(target_os = "macos"))]
-        return (size.width as i32, size.height as i32);
-    }
-    (1920, 1080)
 }
