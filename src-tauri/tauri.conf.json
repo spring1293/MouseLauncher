@@ -8,12 +8,14 @@
   },
   "app": {
     "withGlobalTauri": true,
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "launcher",
         "url": "launcher/index.html",
         "transparent": true,
         "decorations": false,
+        "shadow": false,
         "alwaysOnTop": true,
         "visible": false,
         "skipTaskbar": true,
