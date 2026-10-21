@@ -1,5 +1,4 @@
 node_modules/
 src-tauri/target/
-package-lock.json
 .DS_Store
 .claude/settings.local.json
